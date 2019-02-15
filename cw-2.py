@@ -1,14 +1,17 @@
 from __future__ import print_function
 
+
 class AssertException(Exception):
     pass
+
 
 def format_message(message):
     return message.replace("\n", "<:LF:>")
 
 
 def display(type, message, label="", mode=""):
-    print("\n<{0}:{1}:{2}>{3}".format(type.upper(), mode.upper(), label, format_message(message)))
+    print("\n<{0}:{1}:{2}>{3}".format(
+        type.upper(), mode.upper(), label, format_message(message)))
 
 
 def expect(passed=None, message=None, allow_raise=False):
@@ -32,7 +35,8 @@ def assert_equals(actual, expected, message=None, allow_raise=False):
 
 
 def assert_not_equals(actual, expected, message=None, allow_raise=False):
-    equals_msg = "{0} should not equal {1}".format(repr(actual), repr(expected))
+    r_actual, r_expected = repr(actual), repr(expected)
+    equals_msg = "{0} should not equal {1}".format(r_actual, r_expected)
     if message is None:
         message = equals_msg
     else:
@@ -43,21 +47,40 @@ def assert_not_equals(actual, expected, message=None, allow_raise=False):
 
 def expect_error(message, function, exception=Exception):
     passed = False
-    try: function()
-    except exception: passed = True
-    except: pass
+    try:
+        function()
+    except exception:
+        passed = True
+    except Exception:
+        pass
+    expect(passed, message)
+
+
+def expect_no_error(message, function, exception=BaseException):
+    passed = True
+    try:
+        function()
+    except exception:
+        passed = False
+    except Exception:
+        pass
     expect(passed, message)
 
 
 def pass_(): expect(True)
+
+
 def fail(message): expect(False, message)
 
 
-def assert_approx_equals(actual, expected, margin=1e-9, message=None, allow_raise=False):
-    equals_msg = "{0} should be close to {1} with absolute or relative margin of {2}".format(
-        repr(actual), repr(expected), repr(margin))
-    if message is None: message = equals_msg
-    else: message += ": " + equals_msg
+def assert_approx_equals(
+        actual, expected, margin=1e-9, message=None, allow_raise=False):
+    msg = "{0} should be close to {1} with absolute or relative margin of {2}"
+    equals_msg = msg.format(repr(actual), repr(expected), repr(margin))
+    if message is None:
+        message = equals_msg
+    else:
+        message += ": " + equals_msg
     div = max(abs(actual), abs(expected), 1)
     expect(abs((actual - expected) / div) < margin, message, allow_raise)
 
@@ -70,25 +93,32 @@ def describe1():
     def it1():
         # some test cases...
 '''
+
+
 def _timed_block_factory(opening_text):
     from timeit import default_timer as timer
     from traceback import format_exception
     from sys import exc_info
-    
+
     def _timed_block_decorator(s, before=None, after=None):
         display(opening_text, s)
+
         def wrapper(func):
-            if callable(before): before()
+            if callable(before):
+                before()
             time = timer()
-            try: func()
-            except:
+            try:
+                func()
+            except Exception:
                 fail('Unexpected exception raised')
                 tb_str = ''.join(format_exception(*exc_info()))
                 display('ERROR', tb_str)
             display('COMPLETEDIN', '{:.2f}'.format((timer() - time) * 1000))
-            if callable(after): after()
+            if callable(after):
+                after()
         return wrapper
     return _timed_block_decorator
+
 
 describe = _timed_block_factory('DESCRIBE')
 it = _timed_block_factory('IT')
@@ -102,10 +132,16 @@ def some_tests():
     any code block...
 Note: Timeout value can be a float.
 '''
+
+
 def timeout(sec):
     def wrapper(func):
         from multiprocessing import Process
-        process = Process(target=func)
+        msg = 'Should not throw any exception inside timeout'
+
+        def wrapped():
+            expect_no_error(msg, func)
+        process = Process(target=wrapped)
         process.start()
         process.join(sec)
         if process.is_alive():
