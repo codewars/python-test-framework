@@ -57,14 +57,14 @@ def expect_error(message, function, exception=Exception):
 
 
 def expect_no_error(message, function, exception=BaseException):
-    passed = True
     try:
         function()
-    except exception:
-        passed = False
+    except exception as e:
+        fail("{}: {}".format(message or "Unexpected exception", repr(e)))
+        return
     except Exception:
         pass
-    expect(passed, message)
+    pass_()
 
 
 def pass_(): expect(True)
@@ -137,7 +137,7 @@ Note: Timeout value can be a float.
 def timeout(sec):
     def wrapper(func):
         from multiprocessing import Process
-        msg = 'Should not throw any exception inside timeout'
+        msg = 'Should not throw any exceptions inside timeout'
 
         def wrapped():
             expect_no_error(msg, func)
