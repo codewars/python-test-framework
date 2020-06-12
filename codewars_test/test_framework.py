@@ -109,6 +109,8 @@ def _timed_block_factory(opening_text):
             time = timer()
             try:
                 func()
+            except AssertionError as e:
+                display('FAILED', str(e))
             except Exception:
                 fail('Unexpected exception raised')
                 tb_str = ''.join(format_exception(*exc_info()))
