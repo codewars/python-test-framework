@@ -1,6 +1,6 @@
 # Codewars Test Framework for Python
 
-## Basic Example
+### Basic Example
 
 ```python
 import codewars_test as test
@@ -14,7 +14,7 @@ def example_tests():
         test.assert_equals(add(1, 1), 2, 'Optional Message on Failure')
 ```
 
-## Using Other Assertions
+### Using Other Assertions
 
 Any function that raises an `AssertionError` upon a failed assertion can be used instead of `codewars_test` assertions:
 
