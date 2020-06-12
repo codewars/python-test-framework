@@ -16,7 +16,7 @@ def example_tests():
 
 ### Using Other Assertions
 
-Any function that raises an `AssertionError` upon a failed assertion can be used instead of `codewars_test` assertions:
+Any function that raises an `AssertionError` can be used instead of `codewars_test` assertions:
 
 ```python
 import numpy as np
