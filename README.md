@@ -42,7 +42,7 @@ def test_custom_assertions():
     def test_custom_assertion():
         def custom_assert_eq(actual, expected, msg=None):
             if actual != expected:
-                default_msg = f"`{actual}` did not equal expected `{expected}`"
+                default_msg = f'`{actual}` did not equal expected `{expected}`'
                 raise AssertionError(default_msg if msg is None else msg)
 
         actual = 2
