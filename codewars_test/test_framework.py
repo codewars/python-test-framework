@@ -1,4 +1,5 @@
 from __future__ import print_function
+import functools
 
 
 class AssertException(Exception):
@@ -85,6 +86,21 @@ def assert_approx_equals(
     expect(abs((actual - expected) / div) < margin, message, allow_raise)
 
 
+def make_assertion(func):
+    '''
+    Wraps an assertion function to emit pass/failure stdout prints.
+    The function should raise an AssertionError to cause a failure.
+    '''
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        try:
+            func(*args, **kwargs)
+            pass_()
+        except AssertionError as e:
+            fail(str(e))
+    return wrapper
+
+
 '''
 Usage:
 @describe('describe text')
@@ -109,8 +125,6 @@ def _timed_block_factory(opening_text):
             time = timer()
             try:
                 func()
-            except AssertionError as e:
-                display('FAILED', str(e))
             except Exception:
                 fail('Unexpected exception raised')
                 tb_str = ''.join(format_exception(*exc_info()))
