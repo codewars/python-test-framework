@@ -90,6 +90,15 @@ def make_assertion(func):
     '''
     Wraps an assertion function to emit pass/failure stdout prints.
     The function should raise an AssertionError to cause a failure.
+
+    @test.make_assertion
+    def custom_assert_eq(actual, expected, msg=None):
+        if actual != expected:
+            default_msg = f'`{actual}` did not equal expected `{expected}`'
+            raise AssertionError(default_msg if msg is None else msg)
+
+    # or decorate with a normal function call:
+    custom_assert_eq = make_assertion(custom_assert_eq)
     '''
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
@@ -165,3 +174,4 @@ def timeout(sec):
             process.terminate()
             process.join()
     return wrapper
+

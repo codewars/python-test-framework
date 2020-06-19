@@ -16,7 +16,7 @@ def example_tests():
 
 ### Using Other Assertions
 
-Any function that raises an `AssertionError` can be used alongside `codewars_test` assertions. Decorate the function using `codewars_test.make_assertion` before calling it. This ensures that test output is correctly formatted as expected by the runner. In the following example, the tests are intended to fail in order to show the custom output prints.
+Any function that raises an `AssertionError` can be used alongside built-in `codewars_test` assertions. Decorate the function using `codewars_test.make_assertion` before calling it. This ensures that test output is correctly formatted as expected by the runner. In the following example, the tests are intended to fail in order to show the custom output.
 
 ```python
 import numpy as np
@@ -52,3 +52,4 @@ def test_custom_assertions():
         expected = 1
         custom_assert_eq(actual, expected)
 ```
+
