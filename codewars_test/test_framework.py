@@ -1,5 +1,9 @@
 from __future__ import print_function
 import functools
+import sys
+from multiprocessing import Process
+from timeit import default_timer
+from traceback import format_exception
 
 
 class AssertException(Exception):
@@ -110,6 +114,27 @@ def make_assertion(func):
     return wrapper
 
 
+def _timed_block_factory(opening_text):
+    def _timed_block_decorator(s, before=None, after=None):
+        display(opening_text, s)
+
+        def wrapper(func):
+            if callable(before):
+                before()
+            time = default_timer()
+            try:
+                func()
+            except Exception:
+                fail('Unexpected exception raised')
+                tb_str = ''.join(format_exception(*sys.exc_info()))
+                display('ERROR', tb_str)
+            display('COMPLETEDIN', '{:.2f}'.format((default_timer() - time) * 1000))
+            if callable(after):
+                after()
+        return wrapper
+    return _timed_block_decorator
+
+
 '''
 Usage:
 @describe('describe text')
@@ -118,50 +143,20 @@ def describe1():
     def it1():
         # some test cases...
 '''
-
-
-def _timed_block_factory(opening_text):
-    from timeit import default_timer as timer
-    from traceback import format_exception
-    from sys import exc_info
-
-    def _timed_block_decorator(s, before=None, after=None):
-        display(opening_text, s)
-
-        def wrapper(func):
-            if callable(before):
-                before()
-            time = timer()
-            try:
-                func()
-            except Exception:
-                fail('Unexpected exception raised')
-                tb_str = ''.join(format_exception(*exc_info()))
-                display('ERROR', tb_str)
-            display('COMPLETEDIN', '{:.2f}'.format((timer() - time) * 1000))
-            if callable(after):
-                after()
-        return wrapper
-    return _timed_block_decorator
-
-
 describe = _timed_block_factory('DESCRIBE')
 it = _timed_block_factory('IT')
 
 
-'''
-Timeout utility
-Usage:
-@timeout(sec)
-def some_tests():
-    any code block...
-Note: Timeout value can be a float.
-'''
-
-
 def timeout(sec):
+    '''
+    Timeout utility
+    Usage:
+    @timeout(sec)
+    def some_tests():
+        any code block...
+    Note: Timeout value can be a float.
+    '''
     def wrapper(func):
-        from multiprocessing import Process
         msg = 'Should not throw any exceptions inside timeout'
 
         def wrapped():
