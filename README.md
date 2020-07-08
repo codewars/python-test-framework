@@ -16,6 +16,9 @@ def example_tests():
 
 ### Using Other Assertions
 
+> NOTE: This is not ready for production because the passed test case is not reported correctly.
+> See [#9](https://github.com/codewars/python-test-framework/issues/9).
+
 Any function that raises an `AssertionError` can be used instead of `codewars_test` assertions:
 
 ```python
