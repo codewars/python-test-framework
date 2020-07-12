@@ -11,7 +11,13 @@ class TestOutputs(unittest.TestCase):
 
 def test_against_expected(test_file, expected_file, env):
     def test(self):
-        result = subprocess.run(["python", test_file], env=env, capture_output=True)
+        # Using `stdout=PIPE, stderr=PIPE` for Python 3.6 compatibility instead of `capture_output=True`
+        result = subprocess.run(
+            ["python", test_file],
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
         with open(expected_file, "r", encoding="utf-8") as r:
             # Allow duration to change
             expected = re.sub(
@@ -28,7 +34,13 @@ def get_commands(output):
 
 def test_against_sample(test_file, sample_file, env):
     def test(self):
-        result = subprocess.run(["python", test_file], env=env, capture_output=True)
+        # Using `stdout=PIPE, stderr=PIPE` for Python 3.6 compatibility instead of `capture_output=True`
+        result = subprocess.run(
+            ["python", test_file],
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
         with open(sample_file, "r", encoding="utf-8") as r:
             # Ensure that it contains the same output structure
             self.assertEqual(
