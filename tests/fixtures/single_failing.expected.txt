@@ -1,0 +1,10 @@
+
+<DESCRIBE::>group 1
+
+<IT::>test 1
+
+<FAILED::>1 should equal 2
+
+<COMPLETEDIN::>0.00
+
+<COMPLETEDIN::>0.01
