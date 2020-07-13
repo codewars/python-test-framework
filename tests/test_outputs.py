@@ -23,7 +23,12 @@ def test_against_expected(test_file, expected_file, env):
             expected = re.sub(
                 r"(?<=<COMPLETEDIN::>)\d+(?:\.\d+)?", r"\\d+(?:\\.\\d+)?", r.read()
             )
-            self.assertRegex(result.stdout.decode("utf-8"), expected)
+            actual = result.stdout.decode("utf-8")
+            self.assertRegex(
+                actual,
+                expected,
+                "Expected Pattern:\n{}\n\nGot:\n{}\n".format(expected, actual),
+            )
 
     return test
 
