@@ -1,0 +1,22 @@
+
+<DESCRIBE::>group 1
+
+<IT::>test 1
+
+<PASSED::>Test Passed
+
+<COMPLETEDIN::>0.00
+
+<IT::>test 2
+
+<FAILED::>Expected 1 to equal 2
+
+<COMPLETEDIN::>0.01
+
+<IT::>test 3
+
+<FAILED::>using assert
+
+<COMPLETEDIN::>0.00
+
+<COMPLETEDIN::>0.03

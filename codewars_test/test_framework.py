@@ -1,4 +1,5 @@
 from __future__ import print_function
+import inspect
 
 
 class AssertException(Exception):
@@ -17,14 +18,43 @@ def display(type, message, label="", mode=""):
     )
 
 
-def expect(passed=None, message=None, allow_raise=False):
+# TODO Currently this only works if assertion functions are written directly in the test case.
+def _is_in_test_case():
+    frame = inspect.currentframe()
+    caller_frame = frame.f_back
+    test_case_frame = caller_frame.f_back
+    decorator_frame = test_case_frame.f_back
+    if not decorator_frame:
+        return False
+    if not "func" in decorator_frame.f_locals:
+        return False
+    func = decorator_frame.f_locals["func"]
+    code = test_case_frame.f_code
+    if func and func.__code__ == code and func.test_case_func:
+        return True
+    return False
+
+
+def _handle_test_result(passed, message=None, allow_raise=False, in_test_case=False):
     if passed:
-        display("PASSED", "Test Passed")
+        if not in_test_case:
+            display("PASSED", "Test Passed")
     else:
-        message = message or "Value is not what was expected"
-        display("FAILED", message)
-        if allow_raise:
-            raise AssertException(message)
+        if not message:
+            message = "Value is not what was expected"
+        if in_test_case:
+            raise AssertionError(message)
+        else:
+            display("FAILED", message)
+            if allow_raise:
+                # TODO Use AssertionError?
+                raise AssertException(message)
+
+
+def expect(passed=None, message=None, allow_raise=False):
+    _handle_test_result(
+        passed, message, allow_raise, _is_in_test_case(),
+    )
 
 
 def assert_equals(actual, expected, message=None, allow_raise=False):
@@ -34,7 +64,9 @@ def assert_equals(actual, expected, message=None, allow_raise=False):
     else:
         message += ": " + equals_msg
 
-    expect(actual == expected, message, allow_raise)
+    _handle_test_result(
+        actual == expected, message, allow_raise, _is_in_test_case(),
+    )
 
 
 def assert_not_equals(actual, expected, message=None, allow_raise=False):
@@ -45,7 +77,9 @@ def assert_not_equals(actual, expected, message=None, allow_raise=False):
     else:
         message += ": " + equals_msg
 
-    expect(not (actual == expected), message, allow_raise)
+    _handle_test_result(
+        not (actual == expected), message, allow_raise, _is_in_test_case(),
+    )
 
 
 def expect_error(message, function, exception=Exception):
@@ -56,26 +90,35 @@ def expect_error(message, function, exception=Exception):
         passed = True
     except Exception:
         pass
-    expect(passed, message)
+    _handle_test_result(
+        passed, message, False, _is_in_test_case(),
+    )
 
 
 def expect_no_error(message, function, exception=BaseException):
+    passed = True
     try:
         function()
     except exception as e:
-        fail("{}: {}".format(message or "Unexpected exception", repr(e)))
-        return
+        passed = False
+        message = "{}: {}".format(message or "Unexpected exception", repr(e))
     except Exception:
         pass
-    pass_()
+    _handle_test_result(
+        passed, message, False, _is_in_test_case(),
+    )
 
 
 def pass_():
-    expect(True)
+    if not _is_in_test_case():
+        display("PASSED", "Test Passed")
 
 
 def fail(message):
-    expect(False, message)
+    if _is_in_test_case():
+        raise AssertionError(message)
+    else:
+        display("FAILED", message)
 
 
 def assert_approx_equals(
@@ -88,7 +131,12 @@ def assert_approx_equals(
     else:
         message += ": " + equals_msg
     div = max(abs(actual), abs(expected), 1)
-    expect(abs((actual - expected) / div) < margin, message, allow_raise)
+    _handle_test_result(
+        abs((actual - expected) / div) < margin,
+        message,
+        allow_raise,
+        _is_in_test_case(),
+    )
 
 
 """
@@ -108,13 +156,18 @@ def _timed_block_factory(opening_text):
 
     def _timed_block_decorator(s, before=None, after=None):
         display(opening_text, s)
+        is_test_case = opening_text == "IT"
 
         def wrapper(func):
             if callable(before):
                 before()
             time = timer()
+            if is_test_case:
+                func.test_case_func = True
             try:
                 func()
+                if is_test_case:
+                    display("PASSED", "Test Passed")
             except AssertionError as e:
                 display("FAILED", str(e))
             except Exception:
