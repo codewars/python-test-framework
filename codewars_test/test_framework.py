@@ -51,8 +51,8 @@ def expect_error(message, function, exception=Exception):
         function()
     except exception:
         passed = True
-    except Exception:
-        pass
+    except Exception as e:
+        message = "{}: {} should be {}".format(message or "Unexpected exception", repr(e), repr(exception))
     expect(passed, message)
 
 
@@ -62,7 +62,7 @@ def expect_no_error(message, function, exception=BaseException):
     except exception as e:
         fail("{}: {}".format(message or "Unexpected exception", repr(e)))
         return
-    except Exception:
+    except:
         pass
     pass_()
 
