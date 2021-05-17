@@ -47,11 +47,11 @@
 
 <PASSED::>Test Passed
 
-<FAILED::>f2 did not raise LookupError: ZeroDivisionError('integer division or modulo by zero',) should be <class 'LookupError'>
+<FAILED::>f2 did not raise LookupError: ZeroDivisionError('integer division or modulo by zero') should be <class 'LookupError'>
 
-<FAILED::>f2 did not raise KeyError: ZeroDivisionError('integer division or modulo by zero',) should be <class 'KeyError'>
+<FAILED::>f2 did not raise KeyError: ZeroDivisionError('integer division or modulo by zero') should be <class 'KeyError'>
 
-<FAILED::>f2 did not raise OSError: ZeroDivisionError('integer division or modulo by zero',) should be <class 'OSError'>
+<FAILED::>f2 did not raise OSError: ZeroDivisionError('integer division or modulo by zero') should be <class 'OSError'>
 
 <COMPLETEDIN::>0.02
 
@@ -61,15 +61,15 @@
 
 <PASSED::>Test Passed
 
-<FAILED::>f3 did not raise ArithmeticError: KeyError(1,) should be <class 'ArithmeticError'>
+<FAILED::>f3 did not raise ArithmeticError: KeyError(1) should be <class 'ArithmeticError'>
 
-<FAILED::>f3 did not raise ZeroDivisionError: KeyError(1,) should be <class 'ZeroDivisionError'>
-
-<PASSED::>Test Passed
+<FAILED::>f3 did not raise ZeroDivisionError: KeyError(1) should be <class 'ZeroDivisionError'>
 
 <PASSED::>Test Passed
 
-<FAILED::>f3 did not raise OSError: KeyError(1,) should be <class 'OSError'>
+<PASSED::>Test Passed
+
+<FAILED::>f3 did not raise OSError: KeyError(1) should be <class 'OSError'>
 
 <COMPLETEDIN::>0.02
 
