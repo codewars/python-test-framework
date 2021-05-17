@@ -24,8 +24,8 @@ def test_against_expected(test_file, expected_file, env):
                 r"(?<=<COMPLETEDIN::>)\d+(?:\.\d+)?", r"\\d+(?:\\.\\d+)?", r.read()
             )
             expected = re.sub(
-                r"Error\(([^)]*?)\)", r"Error\\(\1\\)", expected)
-                
+                r"(Error|Exception)\(([^)]*?)\)", r"\1\\(\2\\)", expected)
+
             self.assertRegex(result.stdout.decode("utf-8"), expected)
 
     return test
