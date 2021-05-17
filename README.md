@@ -14,6 +14,8 @@ def example_tests():
         test.assert_equals(add(1, 1), 2, 'Optional Message on Failure')
 ```
 
+<!--
+
 ### Using Other Assertions
 
 > NOTE: This is not ready for production because the passed test case is not reported correctly.
@@ -53,3 +55,4 @@ def test_custom_assertions():
         custom_assert_eq(actual, expected)
 ```
 
+-->
