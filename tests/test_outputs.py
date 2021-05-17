@@ -20,11 +20,10 @@ def test_against_expected(test_file, expected_file, env):
         )
         with open(expected_file, "r", encoding="utf-8") as r:
             # Allow duration to change
+            expected = re.sub( r"[()]", r"\\\1", r.read() )
             expected = re.sub(
-                r"(?<=<COMPLETEDIN::>)\d+(?:\.\d+)?", r"\\d+(?:\\.\\d+)?", r.read()
+                r"(?<=<COMPLETEDIN::>)\d+(?:\.\d+)?", r"\\d+(?:\\.\\d+)?", expected
             )
-            expected = re.sub(
-                r"(Error|Exception)\(([^)]*?)\)", r"\1\\(\2\\)", expected)
 
             self.assertRegex(result.stdout.decode("utf-8"), expected)
 
