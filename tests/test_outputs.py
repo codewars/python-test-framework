@@ -22,7 +22,7 @@ def test_against_expected(test_file, expected_file, env):
             # Escape regular expression
             pattern = re.sub(r"([()])", r"\\\1", r.read())
             # Allow CRLF
-            pattern = re.sub("\n", r"\r?\n", pattern)
+            pattern = re.sub("\n", r"\r?\n", pattern) + r'(?:\r\n)?'
             # Allow duration to change
             pattern = re.sub(
                 r"(?<=<COMPLETEDIN::>)\d+(?:\.\d+)?", r"\\d+(?:\\.\\d+)?", pattern
