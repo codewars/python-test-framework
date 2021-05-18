@@ -56,13 +56,18 @@ def define_tests():
     fixtures_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "fixtures")
     package_dir = Path(fixtures_dir).parent.parent
     files = (f for f in os.listdir(fixtures_dir) if f.endswith(".py"))
+
+    env = {"PYTHONPATH": str(package_dir)}
+    if "SYSTEMROOT" in os.environ:
+        env["SYSTEMROOT"] = os.environ["SYSTEMROOT"]
+
     for f in files:
         expected_file = os.path.join(fixtures_dir, f.replace(".py", ".expected.txt"))
         if os.path.exists(expected_file):
             test_func = test_against_expected(
                 os.path.join(fixtures_dir, f),
                 expected_file,
-                {"PYTHONPATH": str(package_dir)},
+                env,
             )
         else:
             # Use `.sample.txt` when testing against outputs with more variables.
@@ -70,7 +75,7 @@ def define_tests():
             test_func = test_against_sample(
                 os.path.join(fixtures_dir, f),
                 os.path.join(fixtures_dir, f.replace(".py", ".sample.txt")),
-                {"PYTHONPATH": str(package_dir)},
+                env,
             )
         setattr(TestOutputs, "test_{0}".format(f.replace(".py", "")), test_func)
 
