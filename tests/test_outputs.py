@@ -16,11 +16,11 @@ def test_against_expected(test_file, expected_file, env):
             ["python", test_file],
             env=env,
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
         )
         with open(expected_file, "r", encoding="utf-8") as r:
             # Allow duration to change
-            expected = re.sub(r"([()])", r"\\\1", r.read())
+            expected = re.sub( r"([()])", r"\\\1", r.read() )
             expected = re.sub(
                 r"(?<=<COMPLETEDIN::>)\d+(?:\.\d+)?", r"\\d+(?:\\.\\d+)?", expected
             )
@@ -41,7 +41,7 @@ def test_against_sample(test_file, sample_file, env):
             ["python", test_file],
             env=env,
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
         )
         with open(sample_file, "r", encoding="utf-8") as r:
             # Ensure that it contains the same output structure
@@ -62,7 +62,7 @@ def define_tests():
             test_func = test_against_expected(
                 os.path.join(fixtures_dir, f),
                 expected_file,
-                {"PYTHONPATH": package_dir},
+                {"PYTHONPATH": str(package_dir)},
             )
         else:
             # Use `.sample.txt` when testing against outputs with more variables.
@@ -70,7 +70,7 @@ def define_tests():
             test_func = test_against_sample(
                 os.path.join(fixtures_dir, f),
                 os.path.join(fixtures_dir, f.replace(".py", ".sample.txt")),
-                {"PYTHONPATH": package_dir},
+                {"PYTHONPATH": str(package_dir)},
             )
         setattr(TestOutputs, "test_{0}".format(f.replace(".py", "")), test_func)
 
