@@ -19,13 +19,16 @@ def test_against_expected(test_file, expected_file, env):
             stderr=subprocess.STDOUT,
         )
         with open(expected_file, "r", encoding="utf-8") as r:
+            # Escape regular expression
+            pattern = re.sub(r"([()])", r"\\\1", r.read())
+            # Allow CRLF
+            pattern = re.sub("\n", r"\r?\n", pattern)
             # Allow duration to change
-            expected = re.sub(r"([()])", r"\\\1", r.read())
-            expected = re.sub(
-                r"(?<=<COMPLETEDIN::>)\d+(?:\.\d+)?", r"\\d+(?:\\.\\d+)?", expected
+            pattern = re.sub(
+                r"(?<=<COMPLETEDIN::>)\d+(?:\.\d+)?", r"\\d+(?:\\.\\d+)?", pattern
             )
 
-            self.assertRegex(result.stdout.decode("utf-8"), expected)
+            self.assertRegex(result.stdout.decode("utf-8"), pattern)
 
     return test
 
