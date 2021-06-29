@@ -86,7 +86,14 @@ def assert_approx_equals(
 
 
 
-
+'''
+Usage:
+@describe('describe text')
+def describe1():
+    @it('it text')
+    def it1():
+        # some test cases...
+'''
 
 def _timed_block_factory(opening_text):
     from timeit import default_timer as timer
