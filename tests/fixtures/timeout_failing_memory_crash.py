@@ -29,3 +29,4 @@ def tests():
         def _():
             test.pass_()
             XXX(DATA)    # this explodes the heap
+            test.fil("didn't fail...")
