@@ -1,0 +1,6 @@
+
+<DESCRIBE::>group 1
+
+<FAILED::>Should not throw any exceptions inside timeout: KeyError()
+
+<COMPLETEDIN::>30.41
