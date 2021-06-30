@@ -138,7 +138,7 @@ def timeout(sec, user_msg=""):
                 finished.value = 1.0
             except BaseException as e:
                 finished.value = 1.0
-                fail("Should not throw any exceptions inside timeout: {}".format(msg, repr(e)))
+                fail("Should not throw any exceptions inside timeout: {}".format(repr(e)))
 
         finished = Value('d',0.0)
         # needed to know if the process crashed without any "feedback" and before any
