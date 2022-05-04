@@ -11,7 +11,8 @@ def format_message(message):
 
 def display(type, message, label="", mode=""):
     print("\n<{0}:{1}:{2}>{3}".format(
-        type.upper(), mode.upper(), label, format_message(message)))
+        type.upper(), mode.upper(), label, format_message(message))
+        , flush=True)
 
 
 def expect(passed=None, message=None, allow_raise=False):
