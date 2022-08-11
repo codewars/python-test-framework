@@ -1,5 +1,11 @@
 # Codewars Test Framework for Python
 
+### Installation
+
+```bash
+pip install git+https://github.com/codewars/python-test-framework.git#egg=codewars_test
+```
+
 ### Basic Example
 
 ```python
