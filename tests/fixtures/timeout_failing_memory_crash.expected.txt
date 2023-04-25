@@ -1,0 +1,8 @@
+
+<DESCRIBE::>group 1
+
+<IT::>check memory crash
+
+<FAILED::>Something went wrong: the process running the function crashed without feedback (probably saturating the available memory)
+
+<COMPLETEDIN::>30.41

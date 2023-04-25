@@ -86,6 +86,7 @@ def assert_approx_equals(
     expect(abs((actual - expected) / div) < margin, message, allow_raise)
 
 
+
 '''
 Usage:
 @describe('describe text')
@@ -94,7 +95,6 @@ def describe1():
     def it1():
         # some test cases...
 '''
-
 
 def _timed_block_factory(opening_text):
     from timeit import default_timer as timer
@@ -127,28 +127,37 @@ describe = _timed_block_factory('DESCRIBE')
 it = _timed_block_factory('IT')
 
 
-'''
-Timeout utility
-Usage:
-@timeout(sec)
-def some_tests():
-    any code block...
-Note: Timeout value can be a float.
-'''
 
-
-def timeout(sec):
+def timeout(sec, user_msg=""):
+    
     def wrapper(func):
-        from multiprocessing import Process
-        msg = 'Should not throw any exceptions inside timeout'
+        from multiprocessing import Process, Value
 
-        def wrapped():
-            expect_no_error(msg, func)
-        process = Process(target=wrapped)
+        def wrapped(finished):
+            try:
+                func()
+                finished.value = 1.0
+            except BaseException as e:
+                finished.value = 1.0
+                fail("Should not throw any exceptions inside timeout: {}".format(repr(e)))
+
+        finished = Value('d',0.0)
+        # needed to know if the process crashed without any "feedback" and before any
+        # assertion has been done in the wrapped function or the wrapper (happens if 
+        # the heap memory explodes)
+        
+        process = Process(target=wrapped, args=(finished,))
         process.start()
         process.join(sec)
+
         if process.is_alive():
-            fail('Exceeded time limit of {:.3f} seconds'.format(sec))
+            msg = 'Exceeded time limit of {:.3f} seconds'.format(sec)
+            if user_msg:
+                msg += ': ' + user_msg
+            fail(msg)
             process.terminate()
             process.join()
+        elif not finished.value:
+            fail('Something went wrong: the process running the function crashed without feedback (probably saturating the available memory)')
+    
     return wrapper
