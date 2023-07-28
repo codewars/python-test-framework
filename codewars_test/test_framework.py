@@ -112,6 +112,8 @@ def _timed_block_factory(opening_text):
                 func()
             except AssertionError as e:
                 display('FAILED', str(e))
+            except AssertException:
+                pass # assertions emit '<FAIL::>' before throwing the AssertException
             except Exception:
                 fail('Unexpected exception raised')
                 tb_str = ''.join(format_exception(*exc_info()))
