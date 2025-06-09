@@ -97,9 +97,11 @@ def describe1():
 
 
 def _timed_block_factory(opening_text):
-    from timeit import default_timer as timer
+    from time import perf_counter_ns as timer
     from traceback import format_exception
     from sys import exc_info
+
+    millis_per_nano = 1_000_000
 
     def _timed_block_decorator(s, before=None, after=None):
         display(opening_text, s)
@@ -107,7 +109,7 @@ def _timed_block_factory(opening_text):
         def wrapper(func):
             if callable(before):
                 before()
-            time = timer()
+            time_ns = timer()
             try:
                 func()
             except AssertionError as e:
@@ -116,7 +118,7 @@ def _timed_block_factory(opening_text):
                 fail('Unexpected exception raised')
                 tb_str = ''.join(format_exception(*exc_info()))
                 display('ERROR', tb_str)
-            display('COMPLETEDIN', '{:.2f}'.format((timer() - time) * 1000))
+            display('COMPLETEDIN', '{:.2f}'.format((timer() - time_ns) / millis_per_nano))
             if callable(after):
                 after()
         return wrapper
