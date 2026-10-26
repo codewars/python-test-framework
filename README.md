@@ -20,6 +20,40 @@ def example_tests():
         test.assert_equals(add(1, 1), 2, 'Optional Message on Failure')
 ```
 
+### Assertion control flow and timeouts
+
+Assertions report a failure and continue by default. With `allow_raise=True`,
+the assertion stops the current decorated block and reports its failure once.
+The enclosing `it` or `describe` still closes normally, and its `after` hook
+runs. At top level, the framework's assertion exception still propagates.
+
+`@test.timeout(seconds)` executes immediately in a child process. On the
+Codewars Linux runtime it uses a local `fork` context so existing nested test
+functions work on Python 3.14 without changing the process-wide start method.
+Normal completion retains the existing additional passing assertion. An expired
+timeout, abnormal exit or exit before the wrapper completes reports a failure;
+timed-out children are terminated and joined, including children that ignore
+`SIGTERM`. Previously printed assertions remain visible.
+
+The fork context preserves the existing Linux execution model. Tests that start
+threads or import libraries with background threads still require validation in
+the full runner image. This compatibility change does not make fork safe for
+arbitrary multithreaded programs.
+
+### Development tests
+
+Run the output fixtures and compatibility tests with the interpreter under test:
+
+```bash
+python -m unittest discover -v
+```
+
+The timeout regression tests run on Linux and check success/failure counts,
+nested functions, unchanged global start-method selection, early exits, signals,
+startup errors, child cleanup and `allow_raise` behavior. Other platforms skip
+these Linux-specific checks. Set `CW10_RESULTS` to a writable JSON file path to
+capture their raw outputs for integration checks with the Exo result parser.
+
 <!--
 
 ### Using Other Assertions

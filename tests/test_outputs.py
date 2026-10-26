@@ -2,6 +2,7 @@ import unittest
 import subprocess
 import os
 import re
+import sys
 from pathlib import Path
 
 
@@ -13,11 +14,13 @@ def test_against_expected(test_file, expected_file, env):
     def test(self):
         # Using `stdout=PIPE, stderr=PIPE` for Python 3.6 compatibility instead of `capture_output=True`
         result = subprocess.run(
-            ["python", test_file],
+            [sys.executable, test_file],
             env=env,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
+            timeout=15,
         )
+        self.assertEqual(result.returncode, 0, result.stderr.decode("utf-8"))
         with open(expected_file, "r", encoding="utf-8") as r:
             # Allow duration to change
             expected = re.sub(r"([()])", r"\\\1", r.read())
@@ -38,11 +41,13 @@ def test_against_sample(test_file, sample_file, env):
     def test(self):
         # Using `stdout=PIPE, stderr=PIPE` for Python 3.6 compatibility instead of `capture_output=True`
         result = subprocess.run(
-            ["python", test_file],
+            [sys.executable, test_file],
             env=env,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
+            timeout=15,
         )
+        self.assertEqual(result.returncode, 0, result.stderr.decode("utf-8"))
         with open(sample_file, "r", encoding="utf-8") as r:
             # Ensure that it contains the same output structure
             self.assertEqual(
@@ -62,7 +67,7 @@ def define_tests():
             test_func = test_against_expected(
                 os.path.join(fixtures_dir, f),
                 expected_file,
-                {"PYTHONPATH": package_dir},
+                dict(os.environ, PYTHONPATH=str(package_dir)),
             )
         else:
             # Use `.sample.txt` when testing against outputs with more variables.
@@ -70,7 +75,7 @@ def define_tests():
             test_func = test_against_sample(
                 os.path.join(fixtures_dir, f),
                 os.path.join(fixtures_dir, f.replace(".py", ".sample.txt")),
-                {"PYTHONPATH": package_dir},
+                dict(os.environ, PYTHONPATH=str(package_dir)),
             )
         setattr(TestOutputs, "test_{0}".format(f.replace(".py", "")), test_func)
 

@@ -13,7 +13,8 @@ def f1():
 
 # BaseException >> Exception >> ArithmeticError >> ZeroDivisionError
 def f2():
-    return 1 // 0
+    # Exercise the exception hierarchy with stable text across Python versions.
+    raise ZeroDivisionError("integer division or modulo by zero")
 
 
 # BaseException >> Exception >> LookupError >> KeyError
