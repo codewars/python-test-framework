@@ -110,6 +110,9 @@ def _timed_block_factory(opening_text):
             time = timer()
             try:
                 func()
+            except AssertException:
+                # expect() has already emitted the failed assertion.
+                pass
             except AssertionError as e:
                 display('FAILED', str(e))
             except Exception:
@@ -139,16 +142,71 @@ Note: Timeout value can be a float.
 
 def timeout(sec):
     def wrapper(func):
-        from multiprocessing import Process
+        from multiprocessing import get_context
+        import os
+        import signal
+
         msg = 'Should not throw any exceptions inside timeout'
+        process = None
+        receiver = sender = None
 
         def wrapped():
-            expect_no_error(msg, func)
-        process = Process(target=wrapped)
-        process.start()
-        process.join(sec)
-        if process.is_alive():
-            fail('Exceeded time limit of {:.3f} seconds'.format(sec))
-            process.terminate()
-            process.join()
+            receiver.close()
+            try:
+                try:
+                    func()
+                except AssertException:
+                    # Preserve fail-fast behavior without reporting twice.
+                    pass
+                except BaseException as error:
+                    fail('{}: {}'.format(msg, repr(error)))
+                else:
+                    # Retain the existing extra pass for normal completion.
+                    pass_()
+                sender.send_bytes(b'completed')
+            finally:
+                sender.close()
+
+        try:
+            # Codewars runs on Linux. Existing kata use nested functions, which
+            # cannot be pickled by Python 3.14's default forkserver context.
+            # A local context leaves user code's start-method selection intact.
+            context = get_context('fork')
+            receiver, sender = context.Pipe(duplex=False)
+            process = context.Process(target=wrapped)
+            process.start()
+            sender.close()
+            process.join(sec)
+            if process.is_alive():
+                fail('Exceeded time limit of {:.3f} seconds'.format(sec))
+            elif process.exitcode != 0:
+                fail('Timeout process exited with code {}'.format(process.exitcode))
+            else:
+                completed = False
+                if receiver.poll():
+                    try:
+                        completed = receiver.recv_bytes() == b'completed'
+                    except EOFError:
+                        pass
+                if not completed:
+                    # os._exit(0) is not proof that the test body finished.
+                    fail('Timeout process exited before completing the test block')
+        except Exception as error:
+            fail('Unable to run timed tests: {}'.format(repr(error)))
+        finally:
+            if process is not None and process.pid is not None:
+                if process.is_alive():
+                    process.terminate()
+                    process.join(1)
+                    if process.is_alive():
+                        # A test can install or inherit a SIGTERM handler.
+                        try:
+                            os.kill(process.pid, signal.SIGKILL)
+                        except ProcessLookupError:
+                            pass
+                process.join()
+            if receiver is not None:
+                receiver.close()
+            if sender is not None:
+                sender.close()
     return wrapper
