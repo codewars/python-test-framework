@@ -20,10 +20,10 @@ def _safe_repr(value):
         return '<{}: repr unavailable>'.format(type(value).__name__)
 
 
-def _value_details(value):
+def _value_details(value, representation):
     # Multiline strings are easier to compare as text. display() transports
     # newlines inside a single escaped log event, including protocol-like text.
-    return _bounded(value) if isinstance(value, str) else _safe_repr(value)
+    return _bounded(value) if type(value) is str else representation
 
 
 def _location(tb=None):
@@ -71,7 +71,8 @@ def expect(passed=None, message=None, allow_raise=False):
 
 
 def assert_equals(actual, expected, message=None, allow_raise=False):
-    equals_msg = "{0} should equal {1}".format(_safe_repr(actual), _safe_repr(expected))
+    r_actual, r_expected = _safe_repr(actual), _safe_repr(expected)
+    equals_msg = "{0} should equal {1}".format(r_actual, r_expected)
     if message is None:
         message = equals_msg
     else:
@@ -81,7 +82,7 @@ def assert_equals(actual, expected, message=None, allow_raise=False):
         pass_()
     else:
         _failure(message, allow_raise, (
-            ('Expected', _value_details(expected)), ('Actual', _value_details(actual))))
+            ('Expected', _value_details(expected, r_expected)), ('Actual', _value_details(actual, r_actual))))
 
 
 def assert_not_equals(actual, expected, message=None, allow_raise=False):
@@ -95,7 +96,7 @@ def assert_not_equals(actual, expected, message=None, allow_raise=False):
     if not (actual == expected):
         pass_()
     else:
-        _failure(message, allow_raise, (('Unexpected value', _value_details(actual)),))
+        _failure(message, allow_raise, (('Unexpected value', _value_details(actual, r_actual)),))
 
 
 def expect_error(message, function, exception=Exception):
@@ -129,7 +130,8 @@ def fail(message): expect(False, message)
 def assert_approx_equals(
         actual, expected, margin=1e-9, message=None, allow_raise=False):
     msg = "{0} should be close to {1} with absolute or relative margin of {2}"
-    equals_msg = msg.format(_safe_repr(actual), _safe_repr(expected), _safe_repr(margin))
+    r_actual, r_expected = _safe_repr(actual), _safe_repr(expected)
+    equals_msg = msg.format(r_actual, r_expected, _safe_repr(margin))
     if message is None:
         message = equals_msg
     else:
@@ -139,7 +141,7 @@ def assert_approx_equals(
         pass_()
     else:
         _failure(message, allow_raise, (
-            ('Expected', _value_details(expected)), ('Actual', _value_details(actual))))
+            ('Expected', _value_details(expected, r_expected)), ('Actual', _value_details(actual, r_actual))))
 
 
 '''
