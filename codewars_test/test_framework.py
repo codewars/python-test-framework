@@ -1,5 +1,52 @@
 from __future__ import print_function
 
+import sys
+import traceback
+
+
+_VALUE_LIMIT = 2000
+
+
+def _bounded(value):
+    if len(value) > _VALUE_LIMIT:
+        return value[:_VALUE_LIMIT] + ' ... [truncated]'
+    return value
+
+
+def _safe_repr(value):
+    try:
+        return _bounded(repr(value))
+    except Exception:
+        return '<{}: repr unavailable>'.format(type(value).__name__)
+
+
+def _value_details(value):
+    # Multiline strings are easier to compare as text. display() transports
+    # newlines inside a single escaped log event, including protocol-like text.
+    return _bounded(value) if isinstance(value, str) else _safe_repr(value)
+
+
+def _location(tb=None):
+    if tb is not None:
+        frames = traceback.extract_tb(tb)
+    else:
+        frames = traceback.extract_stack()[:-1]
+    for frame in reversed(frames):
+        if frame.filename != __file__:
+            return '{}:{} in {}'.format(frame.filename, frame.lineno, frame.name)
+    return ''
+
+
+def _failure(message, allow_raise=False, details=(), tb=None):
+    display('FAILED', message)
+    for label, value in details:
+        display('LOG', value, label=label, mode='ESC')
+    location = _location(tb)
+    if location:
+        display('LOG', location, label='Location', mode='ESC')
+    if allow_raise:
+        raise AssertException(message)
+
 
 class AssertException(Exception):
     pass
@@ -20,30 +67,35 @@ def expect(passed=None, message=None, allow_raise=False):
         display('PASSED', 'Test Passed')
     else:
         message = message or "Value is not what was expected"
-        display('FAILED', message)
-        if allow_raise:
-            raise AssertException(message)
+        _failure(message, allow_raise)
 
 
 def assert_equals(actual, expected, message=None, allow_raise=False):
-    equals_msg = "{0} should equal {1}".format(repr(actual), repr(expected))
+    equals_msg = "{0} should equal {1}".format(_safe_repr(actual), _safe_repr(expected))
     if message is None:
         message = equals_msg
     else:
         message += ": " + equals_msg
 
-    expect(actual == expected, message, allow_raise)
+    if actual == expected:
+        pass_()
+    else:
+        _failure(message, allow_raise, (
+            ('Expected', _value_details(expected)), ('Actual', _value_details(actual))))
 
 
 def assert_not_equals(actual, expected, message=None, allow_raise=False):
-    r_actual, r_expected = repr(actual), repr(expected)
+    r_actual, r_expected = _safe_repr(actual), _safe_repr(expected)
     equals_msg = "{0} should not equal {1}".format(r_actual, r_expected)
     if message is None:
         message = equals_msg
     else:
         message += ": " + equals_msg
 
-    expect(not (actual == expected), message, allow_raise)
+    if not (actual == expected):
+        pass_()
+    else:
+        _failure(message, allow_raise, (('Unexpected value', _value_details(actual)),))
 
 
 def expect_error(message, function, exception=Exception):
@@ -77,13 +129,17 @@ def fail(message): expect(False, message)
 def assert_approx_equals(
         actual, expected, margin=1e-9, message=None, allow_raise=False):
     msg = "{0} should be close to {1} with absolute or relative margin of {2}"
-    equals_msg = msg.format(repr(actual), repr(expected), repr(margin))
+    equals_msg = msg.format(_safe_repr(actual), _safe_repr(expected), _safe_repr(margin))
     if message is None:
         message = equals_msg
     else:
         message += ": " + equals_msg
     div = max(abs(actual), abs(expected), 1)
-    expect(abs((actual - expected) / div) < margin, message, allow_raise)
+    if abs((actual - expected) / div) < margin:
+        pass_()
+    else:
+        _failure(message, allow_raise, (
+            ('Expected', _value_details(expected)), ('Actual', _value_details(actual))))
 
 
 '''
@@ -98,30 +154,46 @@ def describe1():
 
 def _timed_block_factory(opening_text):
     from timeit import default_timer as timer
-    from traceback import format_exception
-    from sys import exc_info
+
+    def run_part(func, hook=None):
+        try:
+            func()
+        except AssertException:
+            # The assertion already emitted its failure and location.
+            pass
+        except AssertionError as error:
+            message = str(error) or 'Assertion failed'
+            if hook:
+                message = '{} hook: {}'.format(hook, message)
+            _failure(message, tb=sys.exc_info()[2])
+        except Exception:
+            if hook:
+                display('ERROR', '{} hook raised an exception'.format(hook))
+                display('LOG', ''.join(traceback.format_exception(*sys.exc_info())),
+                        label='Traceback', mode='ESC')
+            else:
+                fail('Unexpected exception raised')
+                display('ERROR', ''.join(traceback.format_exception(*sys.exc_info())))
+        else:
+            return True
+        return False
 
     def _timed_block_decorator(s, before=None, after=None):
         display(opening_text, s)
 
         def wrapper(func):
-            if callable(before):
-                before()
             time = timer()
             try:
-                func()
-            except AssertException:
-                # expect() has already emitted the failed assertion.
-                pass
-            except AssertionError as e:
-                display('FAILED', str(e))
-            except Exception:
-                fail('Unexpected exception raised')
-                tb_str = ''.join(format_exception(*exc_info()))
-                display('ERROR', tb_str)
-            display('COMPLETEDIN', '{:.2f}'.format((timer() - time) * 1000))
-            if callable(after):
-                after()
+                if not callable(before) or run_part(before, 'before'):
+                    run_part(func)
+            finally:
+                try:
+                    if callable(after):
+                        run_part(after, 'after')
+                finally:
+                    # Cleanup belongs to the open group, including when setup
+                    # fails. Closing last prevents errors leaking into siblings.
+                    display('COMPLETEDIN', '{:.2f}'.format((timer() - time) * 1000))
         return wrapper
     return _timed_block_decorator
 

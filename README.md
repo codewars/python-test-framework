@@ -42,6 +42,17 @@ arbitrary multithreaded programs.
 
 ### Development tests
 
+Failed comparisons retain the author's message and emit escaped `Expected`,
+`Actual` and `Location` details. Values are limited to 2,000 characters per
+field, with `[truncated]` marking omitted text. A failing bare `assert` gets a
+nonempty message and user-code location; passing bare assertions and empty
+groups do not add implicit successful assertions.
+
+An `after` hook runs even when `before` fails, and runs before the group closes.
+A failed `before` skips the body. Hook errors remain visible alongside any
+original body failure, and later sibling tests can still run. Cleanup hooks
+should therefore tolerate partially initialized state.
+
 Run the output fixtures and compatibility tests with the interpreter under test:
 
 ```bash
