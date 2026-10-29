@@ -43,6 +43,19 @@ class TestReporting(unittest.TestCase):
         self.assertIn('case 7:', output)
         self.assertIn("<LOG:ESC:Expected>{'a': [1, {'b': 3}]}", output)
 
+    def test_diagnostics_do_not_repeat_custom_repr_side_effects(self):
+        self.run_case('''
+            import codewars_test as test
+            class Counted:
+                calls = 0
+                def __repr__(self):
+                    self.calls += 1
+                    return 'custom value'
+            value = Counted()
+            test.assert_equals(value, 0)
+            assert value.calls == 1
+        ''', failed=1)
+
     def test_bare_assertion_has_message_and_user_location(self):
         output = self.run_case('''
             import codewars_test as test
