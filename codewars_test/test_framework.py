@@ -20,30 +20,18 @@ def _safe_repr(value):
         return '<{}: repr unavailable>'.format(type(value).__name__)
 
 
-def _value_details(value, representation):
-    # Multiline strings are easier to compare as text. display() transports
-    # newlines inside a single escaped log event, including protocol-like text.
-    return _bounded(value) if type(value) is str else representation
+def _comparison(message, expected, actual):
+    # One red message, as in the C++ framework: the author's context first,
+    # then the values on aligned lines. repr keeps newlines and protocol-like
+    # text unambiguous, and display() escapes the line breaks.
+    lines = ['Expected: ' + expected, 'Actual:   ' + actual]
+    if message is not None:
+        lines.insert(0, message)
+    return '\n'.join(lines)
 
 
-def _location(tb=None):
-    if tb is not None:
-        frames = traceback.extract_tb(tb)
-    else:
-        frames = traceback.extract_stack()[:-1]
-    for frame in reversed(frames):
-        if frame.filename != __file__:
-            return '{}:{} in {}'.format(frame.filename, frame.lineno, frame.name)
-    return ''
-
-
-def _failure(message, allow_raise=False, details=(), tb=None):
+def _failure(message, allow_raise=False):
     display('FAILED', message)
-    for label, value in details:
-        display('LOG', value, label=label, mode='ESC')
-    location = _location(tb)
-    if location:
-        display('LOG', location, label='Location', mode='ESC')
     if allow_raise:
         raise AssertException(message)
 
@@ -71,32 +59,17 @@ def expect(passed=None, message=None, allow_raise=False):
 
 
 def assert_equals(actual, expected, message=None, allow_raise=False):
-    r_actual, r_expected = _safe_repr(actual), _safe_repr(expected)
-    equals_msg = "{0} should equal {1}".format(r_actual, r_expected)
-    if message is None:
-        message = equals_msg
-    else:
-        message += ": " + equals_msg
-
     if actual == expected:
         pass_()
     else:
-        _failure(message, allow_raise, (
-            ('Expected', _value_details(expected, r_expected)), ('Actual', _value_details(actual, r_actual))))
+        _failure(_comparison(message, _safe_repr(expected), _safe_repr(actual)), allow_raise)
 
 
 def assert_not_equals(actual, expected, message=None, allow_raise=False):
-    r_actual, r_expected = _safe_repr(actual), _safe_repr(expected)
-    equals_msg = "{0} should not equal {1}".format(r_actual, r_expected)
-    if message is None:
-        message = equals_msg
-    else:
-        message += ": " + equals_msg
-
     if not (actual == expected):
         pass_()
     else:
-        _failure(message, allow_raise, (('Unexpected value', _value_details(actual, r_actual)),))
+        _failure(_comparison(message, 'not ' + _safe_repr(expected), _safe_repr(actual)), allow_raise)
 
 
 def expect_error(message, function, exception=Exception):
@@ -129,19 +102,13 @@ def fail(message): expect(False, message)
 
 def assert_approx_equals(
         actual, expected, margin=1e-9, message=None, allow_raise=False):
-    msg = "{0} should be close to {1} with absolute or relative margin of {2}"
-    r_actual, r_expected = _safe_repr(actual), _safe_repr(expected)
-    equals_msg = msg.format(r_actual, r_expected, _safe_repr(margin))
-    if message is None:
-        message = equals_msg
-    else:
-        message += ": " + equals_msg
     div = max(abs(actual), abs(expected), 1)
     if abs((actual - expected) / div) < margin:
         pass_()
     else:
-        _failure(message, allow_raise, (
-            ('Expected', _value_details(expected, r_expected)), ('Actual', _value_details(actual, r_actual))))
+        expected_text = '{} (within absolute or relative margin {})'.format(
+            _safe_repr(expected), _safe_repr(margin))
+        _failure(_comparison(message, expected_text, _safe_repr(actual)), allow_raise)
 
 
 '''
@@ -161,13 +128,13 @@ def _timed_block_factory(opening_text):
         try:
             func()
         except AssertException:
-            # The assertion already emitted its failure and location.
+            # The assertion already emitted its failure.
             pass
         except AssertionError as error:
             message = str(error) or 'Assertion failed'
             if hook:
                 message = '{} hook: {}'.format(hook, message)
-            _failure(message, tb=sys.exc_info()[2])
+            _failure(message)
         except Exception:
             if hook:
                 display('ERROR', '{} hook raised an exception'.format(hook))

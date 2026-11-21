@@ -223,7 +223,7 @@ class TestCompatibility(unittest.TestCase):
                 def second():
                     test.pass_()
         ''', passed=1, failed=1)
-        self.assertIn("author context: 1 should equal 2", output)
+        self.assertIn("author context<:LF:>Expected: 2<:LF:>Actual:   1", output)
         self.assertIn("CLEANUP", output)
         self.assertNotIn("UNREACHABLE", output)
         self.assertEqual(output.count("<COMPLETEDIN::>"), 3)
@@ -236,7 +236,7 @@ class TestCompatibility(unittest.TestCase):
                 test.assert_equals(1, 2, "author context", allow_raise=True)
                 print("UNREACHABLE")
         ''', failed=1)
-        self.assertIn("author context: 1 should equal 2", output)
+        self.assertIn("author context<:LF:>Expected: 2<:LF:>Actual:   1", output)
         self.assertNotIn("UNREACHABLE", output)
 
     def test_default_assertions_still_continue(self):

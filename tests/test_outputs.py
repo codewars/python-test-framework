@@ -28,10 +28,7 @@ def test_against_expected(test_file, expected_file, env):
                 r"(?<=<COMPLETEDIN::>)\d+(?:\.\d+)?", r"\\d+(?:\\.\\d+)?", expected
             )
 
-            # Additional escaped diagnostic logs are tested separately; retain
-            # the exact legacy assertion text and event ordering contract here.
-            output = re.sub(r"\n<LOG:ESC:[^>]*>[^\n]*\n", "", result.stdout.decode("utf-8"))
-            self.assertRegex(output, expected)
+            self.assertRegex(result.stdout.decode("utf-8"), expected)
 
     return test
 
