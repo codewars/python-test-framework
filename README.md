@@ -42,10 +42,10 @@ arbitrary multithreaded programs.
 
 ### Development tests
 
-Failed comparisons retain the author's message and emit escaped `Expected`,
-`Actual` and `Location` details. Values are limited to 2,000 characters per
-field, with `[truncated]` marking omitted text. A failing bare `assert` gets a
-nonempty message and user-code location; passing bare assertions and empty
+A failed comparison is a single message: the author's message, if any, then
+`Expected:` and `Actual:` lines with each value's `repr`. Values are limited to
+2,000 characters, with `[truncated]` marking omitted text. A failing bare
+`assert` gets a nonempty message; passing bare assertions and empty
 groups do not add implicit successful assertions.
 
 An `after` hook runs even when `before` fails, and runs before the group closes.

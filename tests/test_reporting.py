@@ -12,10 +12,10 @@ class TestReporting(unittest.TestCase):
             import codewars_test as test
             test.assert_equals('café\n<FAILED::>literal', 'café\nexpected', 'random seed 42')
         ''', failed=1)
-        self.assertIn('random seed 42:', output)
-        self.assertIn('<LOG:ESC:Expected>café<:LF:>expected', output)
-        self.assertIn('<LOG:ESC:Actual>café<:LF:><FAILED::>literal', output)
-        self.assertIn('<LOG:ESC:Location><string>:3', output)
+        self.assertIn("<FAILED::>random seed 42<:LF:>"
+                      "Expected: 'café\\nexpected'<:LF:>"
+                      "Actual:   'café\\n<FAILED::>literal'", output)
+        self.assertNotIn('<LOG:', output)
 
     def test_large_values_have_bounded_output(self):
         output = self.run_case('''
@@ -40,8 +40,8 @@ class TestReporting(unittest.TestCase):
             import codewars_test as test
             test.assert_equals({'a': [1, {'b': 2}]}, {'a': [1, {'b': 3}]}, 'case 7')
         ''', failed=1)
-        self.assertIn('case 7:', output)
-        self.assertIn("<LOG:ESC:Expected>{'a': [1, {'b': 3}]}", output)
+        self.assertIn("<FAILED::>case 7<:LF:>Expected: {'a': [1, {'b': 3}]}<:LF:>"
+                      "Actual:   {'a': [1, {'b': 2}]}", output)
 
     def test_diagnostics_do_not_repeat_custom_repr_side_effects(self):
         self.run_case('''
@@ -64,7 +64,7 @@ class TestReporting(unittest.TestCase):
                 assert False
         ''', failed=1)
         self.assertIn('<FAILED::>Assertion failed', output)
-        self.assertIn('<string>:5 in case', output)
+        self.assertNotIn('<LOG:', output)
         self.assertEqual(output.count('<COMPLETEDIN::>'), 1)
 
     def test_passing_bare_assertion_and_empty_group_add_no_success(self):
@@ -134,10 +134,13 @@ class TestReporting(unittest.TestCase):
         self.assertIn('cleanup error', output)
 
     def test_approximate_and_negative_assertions_keep_counts(self):
-        self.run_case('''
+        output = self.run_case('''
             import codewars_test as test
             test.assert_approx_equals(1, 1.0000000001)
             test.assert_approx_equals(1, 2)
             test.assert_not_equals(1, 2)
             test.assert_not_equals(1, 1)
         ''', passed=2, failed=2)
+        self.assertIn('<FAILED::>Expected: 2 (within absolute or relative margin 1e-09)'
+                      '<:LF:>Actual:   1', output)
+        self.assertIn('<FAILED::>Expected: not 1<:LF:>Actual:   1', output)
